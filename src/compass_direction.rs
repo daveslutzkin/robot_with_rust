@@ -8,6 +8,8 @@ pub enum CompassDirection {
   West,
 }
 
+impl Copy for CompassDirection {}
+
 impl FromStr for CompassDirection {
   fn from_str(s: &str) -> Option<CompassDirection> {
     match s {

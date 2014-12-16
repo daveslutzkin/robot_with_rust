@@ -37,7 +37,7 @@ impl<'t> Robot<'t> {
               CompassDirection::South => (self.x, self.y - 1),
               CompassDirection::West  => (self.x - 1, self.y),
             };
-          (new_x, new_y, self.heading)
+          (new_x, new_y, self.heading.clone())
         },
         Command::Left                 => {
           let new_heading = match self.heading {
@@ -59,7 +59,7 @@ impl<'t> Robot<'t> {
         },
         Command::Report               => {
           println!("{}", self);
-          (self.x, self.y, self.heading)
+          (self.x, self.y, self.heading.clone())
         },
       };
 
@@ -69,20 +69,135 @@ impl<'t> Robot<'t> {
       self.heading = new_heading
     }
   }
-
-  pub fn get_x(&self) -> int {
-    self.x
-  }
-  pub fn get_y(&self) -> int {
-    self.y
-  }
-  pub fn get_heading(&self) -> CompassDirection {
-    self.heading
-  }
 }
 
 impl<'t> fmt::Show for Robot<'t> {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     write!(f, "{},{},{}", self.x, self.y, self.heading)
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::Robot;
+  use table::Table;
+  use command::Command;
+  use compass_direction::CompassDirection;
+
+  #[test]
+  fn new_robot_is_not_placed() {
+    let table = Table::new(10, 8);
+    let robot = Robot::new(&table);
+    assert_eq!(robot.is_placed(), false);
+  }
+
+  #[test]
+  fn command_before_place_does_nothing() {
+    let table = Table::new(10, 8);
+    let mut robot = Robot::new(&table);
+    robot.perform(Command::Move);
+    assert_eq!(robot.x, -1);
+    assert_eq!(robot.y, -1);
+    assert_eq!(robot.heading, CompassDirection::North);
+  }
+
+  #[test]
+  fn place_command_places_robot() {
+    let table = Table::new(10, 8);
+    let mut robot = Robot::new(&table);
+    robot.perform(Command::Place(3, 6, CompassDirection::West));
+    assert_eq!(robot.is_placed(), true);
+  }
+
+  #[test]
+  fn place_command_places_robot_correctly() {
+    let table = Table::new(10, 8);
+    let mut robot = Robot::new(&table);
+    robot.perform(Command::Place(3, 6, CompassDirection::West));
+    assert_eq!(robot.x, 3);
+    assert_eq!(robot.y, 6);
+    assert_eq!(robot.heading, CompassDirection::West)
+  }
+
+  #[test]
+  fn move_command_moves_robot_correctly() {
+    let table = Table::new(10, 8);
+    let mut robot = Robot::new(&table);
+    robot.perform(Command::Place(3, 6, CompassDirection::West));
+    robot.perform(Command::Move);
+    assert_eq!(robot.x, 2);
+    assert_eq!(robot.y, 6);
+    assert_eq!(robot.heading, CompassDirection::West)
+  }
+
+  #[test]
+  fn left_command_turns_robot_correctly() {
+    let table = Table::new(10, 8);
+    let mut robot = Robot::new(&table);
+    robot.perform(Command::Place(3, 6, CompassDirection::West));
+    robot.perform(Command::Left);
+    assert_eq!(robot.x, 3);
+    assert_eq!(robot.y, 6);
+    assert_eq!(robot.heading, CompassDirection::South)
+  }
+
+  #[test]
+  fn right_command_turns_robot_correctly() {
+    let table = Table::new(10, 8);
+    let mut robot = Robot::new(&table);
+    robot.perform(Command::Place(3, 6, CompassDirection::West));
+    robot.perform(Command::Right);
+    assert_eq!(robot.x, 3);
+    assert_eq!(robot.y, 6);
+    assert_eq!(robot.heading, CompassDirection::North)
+  }
+
+  #[test]
+  fn report_command_outputs_position() {
+    let table = Table::new(10, 8);
+    let mut robot = Robot::new(&table);
+    robot.perform(Command::Place(3, 6, CompassDirection::West));
+    robot.perform(Command::Report);
+    // What assertion?
+  }
+
+  #[test]
+  fn move_off_the_left_edge_is_stopped() {
+    let table = Table::new(10, 8);
+    let mut robot = Robot::new(&table);
+    robot.perform(Command::Place(0, 5, CompassDirection::West));
+    robot.perform(Command::Move);
+    assert_eq!(robot.x, 0);
+    assert_eq!(robot.y, 5);
+  }
+
+  #[test]
+  fn move_off_the_bottom_edge_is_stopped() {
+    let table = Table::new(10, 8);
+    let mut robot = Robot::new(&table);
+    robot.perform(Command::Place(5, 0, CompassDirection::South));
+    robot.perform(Command::Move);
+    assert_eq!(robot.x, 5);
+    assert_eq!(robot.y, 0);
+  }
+
+  #[test]
+  fn move_off_the_right_edge_is_stopped() {
+    let table = Table::new(10, 8);
+    let mut robot = Robot::new(&table);
+    robot.perform(Command::Place(9, 0, CompassDirection::East));
+    robot.perform(Command::Move);
+    assert_eq!(robot.x, 9);
+    assert_eq!(robot.y, 0);
+  }
+
+  #[test]
+  fn move_off_the_top_edge_is_stopped() {
+    let table = Table::new(10, 8);
+    let mut robot = Robot::new(&table);
+    robot.perform(Command::Place(8, 7, CompassDirection::North));
+    robot.perform(Command::Move);
+    assert_eq!(robot.x, 8);
+    assert_eq!(robot.y, 7);
   }
 }

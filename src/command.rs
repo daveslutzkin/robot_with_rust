@@ -19,6 +19,8 @@ impl Command {
   }
 }
 
+impl Copy for Command {}
+
 impl FromStr for Command {
   fn from_str(s: &str) -> Option<Command> {
     let parts = s.trim().split(' ').collect::<Vec<&str>>();
@@ -39,5 +41,54 @@ impl FromStr for Command {
       "REPORT"  => Some(Command::Report),
       _         => None
     }
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::Command;
+  use compass_direction::CompassDirection;
+
+  fn test_command(raw_command: &str, expected_command: Command) {
+    match from_str(raw_command) {
+      Some(command) if command == expected_command
+        => assert!(true),
+      Some(Command::Place(x,y,d))
+        => assert!(false, "{} became an unexpected place {},{},{}", raw_command, x, y, d),
+      Some(unexpected_command)
+        => assert!(false, "{} became an unexpected return {}", raw_command, unexpected_command),
+      None
+        => assert!(false, "No command read"),
+    }
+  }
+
+  #[test]
+  fn command_place() {
+    test_command("PLACE 3,4,WEST", Command::Place(3, 4, CompassDirection::West))
+  }
+
+  #[test]
+  fn command_move() {
+    test_command("MOVE", Command::Move)
+  }
+
+  #[test]
+  fn command_left() {
+    test_command("LEFT", Command::Left)
+  }
+
+  #[test]
+  fn command_right() {
+    test_command("RIGHT", Command::Right)
+  }
+
+  #[test]
+  fn command_report() {
+    test_command("REPORT", Command::Report)
+  }
+
+  #[test]
+  fn command_report_with_whitespace() {
+    test_command("REPORT\n\r", Command::Report)
   }
 }

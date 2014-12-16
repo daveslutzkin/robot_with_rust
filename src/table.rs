@@ -13,3 +13,5 @@ impl Table {
     x >= 0 && y >= 0 && x < self.width && y < self.height
   }
 }
+
+impl Copy for Table {}
